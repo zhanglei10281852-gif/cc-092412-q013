@@ -215,6 +215,51 @@ CREATE TABLE IF NOT EXISTS background_jobs (
 );
 
 CREATE INDEX IF NOT EXISTS idx_jobs_ready ON background_jobs(status, available_at);
+
+CREATE TABLE IF NOT EXISTS role_change_rehearsals (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    role_id INTEGER NOT NULL REFERENCES roles(id),
+    role_code TEXT NOT NULL,
+    requested_name TEXT,
+    requested_description TEXT,
+    base_permissions_json TEXT NOT NULL,
+    requested_permissions_json TEXT NOT NULL,
+    added_permissions_json TEXT NOT NULL,
+    removed_permissions_json TEXT NOT NULL,
+    is_high_risk INTEGER NOT NULL CHECK(is_high_risk IN (0,1)),
+    impact_json TEXT NOT NULL,
+    state_snapshot_json TEXT NOT NULL,
+    state_version TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'awaiting_approval'
+        CHECK(status IN ('awaiting_approval','approved','rejected','applied','expired')),
+    created_by INTEGER NOT NULL REFERENCES users(id),
+    created_by_name TEXT NOT NULL,
+    request_comment TEXT NOT NULL DEFAULT '',
+    approved_by INTEGER REFERENCES users(id),
+    approved_by_name TEXT,
+    approved_at TEXT,
+    approve_comment TEXT NOT NULL DEFAULT '',
+    applied_at TEXT,
+    applied_state_version TEXT,
+    reconciliation_json TEXT,
+    created_at TEXT NOT NULL,
+    expires_at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_role_changes_status ON role_change_rehearsals(status);
+CREATE INDEX IF NOT EXISTS idx_role_changes_role ON role_change_rehearsals(role_id);
+
+CREATE TABLE IF NOT EXISTS role_change_approvals (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    rehearsal_id INTEGER NOT NULL REFERENCES role_change_rehearsals(id),
+    approver_user_id INTEGER NOT NULL REFERENCES users(id),
+    approver_name TEXT NOT NULL,
+    decision TEXT NOT NULL CHECK(decision IN ('approved','rejected')),
+    comment TEXT NOT NULL DEFAULT '',
+    state_version_at_decision TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    UNIQUE(rehearsal_id, approver_user_id)
+);
 '''
 
 PERMISSIONS = [

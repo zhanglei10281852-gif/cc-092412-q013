@@ -61,6 +61,17 @@ class RoleUpdate(BaseModel):
     permission_codes: list[str] | None = None
 
 
+class RoleChangePreviewRequest(BaseModel):
+    name: str | None = Field(default=None, min_length=1, max_length=100)
+    description: str | None = Field(default=None, max_length=500)
+    permission_codes: list[str] = Field(..., max_length=100)
+    comment: str = Field(default="", max_length=500)
+
+
+class RoleChangeDecisionRequest(BaseModel):
+    comment: str = Field(default="", max_length=500)
+
+
 class RoleAssignment(BaseModel):
     role_codes: list[str] = Field(min_length=1, max_length=20)
 
