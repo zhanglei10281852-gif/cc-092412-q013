@@ -113,6 +113,29 @@ CREATE TABLE IF NOT EXISTS idempotency_records (
     PRIMARY KEY(scope, idempotency_key)
 );
 
+CREATE TABLE IF NOT EXISTS role_change_previews (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    role_id INTEGER NOT NULL REFERENCES roles(id),
+    change_json TEXT NOT NULL,
+    impact_json TEXT NOT NULL,
+    base_fingerprint TEXT NOT NULL,
+    risk_level TEXT NOT NULL CHECK(risk_level IN ('low','high')),
+    status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending','confirmed','applied','stale','cancelled')),
+    created_by INTEGER NOT NULL REFERENCES users(id),
+    created_by_name TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    confirmed_by INTEGER REFERENCES users(id),
+    confirmed_by_name TEXT,
+    confirmed_at TEXT,
+    applied_by INTEGER REFERENCES users(id),
+    applied_by_name TEXT,
+    applied_at TEXT,
+    reconciliation_json TEXT,
+    updated_at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_role_change_previews_role ON role_change_previews(role_id, id DESC);
+
 CREATE TABLE IF NOT EXISTS residents (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
